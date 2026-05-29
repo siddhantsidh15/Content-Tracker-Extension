@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Content Upload Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body class="dark">
+    <div class="app">
+      <!-- HEADER -->
+      <header class="header">
+        <div class="header-left">
+          <div class="logo-mark">▲</div>
+          <div>
+            <h1 class="app-title">Content Tracker</h1>
+            <p class="app-sub">IG · YT · LI upload log</p>
+          </div>
+        </div>
+        <div class="header-controls">
+          <button class="icon-btn" id="viewToggle" title="Toggle view layout">
+            <span id="viewIcon">⊞</span>
+          </button>
+          <button class="icon-btn" id="themeToggle" title="Toggle theme">
+            <span id="themeIcon">☀</span>
+          </button>
+          <button id="open-tab-btn" class="icon-button" title="Open in new tab">
+            <!-- A simple SVG expand icon -->
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+              ></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- INPUT AREA -->
+      <div class="input-zone">
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="contentInput"
+            class="content-input"
+            placeholder="Add content title and press Enter…"
+            autocomplete="off"
+          />
+          <span class="input-hint">↵</span>
+        </div>
+      </div>
+
+      <!-- STATS BAR -->
+      <div class="stats-bar">
+        <span class="stat"><span id="totalCount">0</span> entries</span>
+        <span class="stat-div">·</span>
+        <span class="stat"><span id="doneCount">0</span> completed</span>
+        <span class="stat-div">·</span>
+        <span class="stat page-info"
+          >Page <span id="currentPage">1</span> /
+          <span id="totalPages">1</span></span
+        >
+      </div>
+
+      <!-- ENTRIES GRID -->
+      <div class="entries-container" id="entriesContainer">
+        <div class="col" id="colLeft"></div>
+        <div class="col-divider"></div>
+        <div class="col" id="colRight"></div>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">✦</div>
+        <p>No content yet.<br />Type above and hit Enter.</p>
+      </div>
+
+      <!-- PAGINATION -->
+      <div class="pagination" id="pagination">
+        <button class="page-btn" id="prevBtn" disabled>‹ Prev</button>
+        <div class="page-dots" id="pageDots"></div>
+        <button class="page-btn" id="nextBtn">Next ›</button>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
