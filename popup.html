@@ -13,7 +13,6 @@
   </head>
   <body class="dark">
     <div class="app">
-      <!-- HEADER -->
       <header class="header">
         <div class="header-left">
           <div class="logo-mark">▲</div>
@@ -23,6 +22,12 @@
           </div>
         </div>
         <div class="header-controls">
+          <button class="icon-btn" id="historyToggle" title="View History">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </button>
           <button class="icon-btn" id="viewToggle" title="Toggle view layout">
             <span id="viewIcon">⊞</span>
           </button>
@@ -30,18 +35,8 @@
             <span id="themeIcon">☀</span>
           </button>
           <button id="open-tab-btn" class="icon-button" title="Open in new tab">
-            <!-- A simple SVG expand icon -->
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
-              ></path>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
               <polyline points="15 3 21 3 21 9"></polyline>
               <line x1="10" y1="14" x2="21" y2="3"></line>
             </svg>
@@ -49,8 +44,16 @@
         </div>
       </header>
 
-      <!-- INPUT AREA -->
-      <div class="input-zone">
+      <div class="today-bar" id="todayBar">
+        <div class="today-title">TODAY'S UPLOADS</div>
+        <div class="today-stats">
+          <span class="stat-pill ig"><span id="today-ig">0</span> IG</span>
+          <span class="stat-pill yt"><span id="today-yt">0</span> YT</span>
+          <span class="stat-pill li"><span id="today-li">0</span> LI</span>
+        </div>
+      </div>
+
+      <div class="input-zone" id="inputZone">
         <div class="input-wrapper">
           <input
             type="text"
@@ -63,8 +66,7 @@
         </div>
       </div>
 
-      <!-- STATS BAR -->
-      <div class="stats-bar">
+      <div class="stats-bar" id="mainStatsBar">
         <span class="stat"><span id="totalCount">0</span> entries</span>
         <span class="stat-div">·</span>
         <span class="stat"><span id="doneCount">0</span> completed</span>
@@ -75,24 +77,29 @@
         >
       </div>
 
-      <!-- ENTRIES GRID -->
       <div class="entries-container" id="entriesContainer">
         <div class="col" id="colLeft"></div>
         <div class="col-divider"></div>
         <div class="col" id="colRight"></div>
       </div>
 
-      <!-- EMPTY STATE -->
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">✦</div>
         <p>No content yet.<br />Type above and hit Enter.</p>
       </div>
 
-      <!-- PAGINATION -->
       <div class="pagination" id="pagination">
         <button class="page-btn" id="prevBtn" disabled>‹ Prev</button>
         <div class="page-dots" id="pageDots"></div>
         <button class="page-btn" id="nextBtn">Next ›</button>
+      </div>
+
+      <div class="history-container" id="historyContainer">
+        <div class="history-header">
+          <h2>Upload History</h2>
+        </div>
+        <div class="history-list" id="historyList">
+          </div>
       </div>
     </div>
 

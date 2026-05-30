@@ -583,3 +583,120 @@ body {
   float: right;
   padding: 4px;
 }
+/* ───── TODAY'S UPLOADS BAR ───── */
+.today-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--divider);
+}
+
+.today-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  font-weight: 700;
+}
+
+.today-stats, .history-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.stat-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-pill.ig { background: rgba(225,48,108,0.1); color: var(--ig); }
+.stat-pill.yt { background: rgba(255,0,0,0.1); color: var(--yt); }
+.stat-pill.li { background: rgba(0,119,181,0.1); color: var(--li); }
+
+/* ───── HISTORY VIEW ───── */
+.history-container {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  padding: 18px;
+  background: var(--bg);
+  overflow-y: auto;
+}
+
+.history-container.show {
+  display: flex;
+  animation: slideIn 0.2s ease;
+}
+
+.history-header h2 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: var(--text);
+  font-weight: 800;
+}
+
+.history-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.history-date {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+
+/* HIDE MAIN UI WHEN HISTORY IS OPEN */
+body.viewing-history #inputZone,
+body.viewing-history #mainStatsBar,
+body.viewing-history #entriesContainer,
+body.viewing-history #emptyState,
+body.viewing-history #pagination,
+body.viewing-history #todayBar {
+  display: none !important;
+}
+
+/* ───── COPY BUTTON ───── */
+.copy-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition);
+}
+
+/* Reveal on card hover */
+.entry-card:hover .copy-btn {
+  opacity: 1;
+  visibility: visible;
+}
+
+.copy-btn:hover {
+  background: var(--btn-hover);
+  color: var(--text);
+  border-color: var(--border);
+}
