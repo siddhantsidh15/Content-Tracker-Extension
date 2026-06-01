@@ -601,7 +601,8 @@ body {
   font-weight: 700;
 }
 
-.today-stats, .history-stats {
+.today-stats,
+.history-stats {
   display: flex;
   gap: 8px;
 }
@@ -616,9 +617,18 @@ body {
   align-items: center;
   gap: 6px;
 }
-.stat-pill.ig { background: rgba(225,48,108,0.1); color: var(--ig); }
-.stat-pill.yt { background: rgba(255,0,0,0.1); color: var(--yt); }
-.stat-pill.li { background: rgba(0,119,181,0.1); color: var(--li); }
+.stat-pill.ig {
+  background: rgba(225, 48, 108, 0.1);
+  color: var(--ig);
+}
+.stat-pill.yt {
+  background: rgba(255, 0, 0, 0.1);
+  color: var(--yt);
+}
+.stat-pill.li {
+  background: rgba(0, 119, 181, 0.1);
+  color: var(--li);
+}
 
 /* ───── HISTORY VIEW ───── */
 .history-container {
@@ -652,7 +662,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .history-date {
@@ -699,4 +709,248 @@ body.viewing-history #todayBar {
   background: var(--btn-hover);
   color: var(--text);
   border-color: var(--border);
+}
+
+/* Update Root to include Twitter */
+:root {
+  --radius: 10px;
+  --radius-sm: 6px;
+  --transition: 0.18s ease;
+  --font-display: "Syne", sans-serif;
+  --font-mono: "Space Mono", monospace;
+
+  /* Platform colors */
+  --ig: #e1306c;
+  --yt: #ff0000;
+  --li: #0077b5;
+  --tw: #1da1f2; /* Twitter addition */
+}
+
+/* ───── TWITTER STYLES ───── */
+.stat-pill.tw {
+  background: rgba(29, 161, 242, 0.1);
+  color: var(--tw);
+}
+
+.platform-check.tw input:checked ~ .platform-pill {
+  background: rgba(29, 161, 242, 0.12);
+  border-color: var(--tw);
+  color: var(--tw);
+}
+.platform-check.tw input:checked ~ .platform-pill .dot {
+  background: var(--tw);
+}
+
+/* ───── HISTORY UI UPDATES ───── */
+.history-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--divider);
+  margin-top: auto;
+}
+
+.history-page-info {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ───── HISTORY TOGGLE & SEARCH ───── */
+.history-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 16px;
+}
+
+.history-tabs {
+  display: flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+
+.hist-tab {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.hist-tab.active {
+  background: var(--btn-hover);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.history-search-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.history-search {
+  width: 100%;
+  height: 30px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.history-search:focus {
+  border-color: var(--border-focus);
+}
+
+.history-search::placeholder {
+  color: var(--text-dim);
+}
+
+/* Flex Utilities for History Cards */
+.history-card.flex-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-card.flex-col {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* ───── PREMIUM DASHBOARD STATS REDESIGN ───── */
+#historyList {
+  position: relative;
+  padding-left: 8px;
+}
+
+/* Vertical timeline track line */
+body.viewing-history .history-list::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: var(--border);
+  opacity: 0.7;
+  z-index: 0;
+}
+
+.stats-dashboard-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 12px 0;
+  border-bottom: 1px solid var(--divider);
+  z-index: 1;
+}
+
+.stats-dashboard-row:last-child {
+  border-bottom: none;
+}
+
+.stats-timeline-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.stats-marker-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--text-dim);
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--text-muted);
+  transition: all var(--transition);
+}
+
+.stats-dashboard-row:hover .stats-marker-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.stats-display-date {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+
+.stats-matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 68px);
+  gap: 6px;
+}
+
+.matrix-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: all var(--transition);
+}
+
+.matrix-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.matrix-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums; /* Forces identical width alignment across numbers */
+}
+
+/* Active State Design Frameworks */
+.matrix-cell.ig.active {
+  background: rgba(225, 48, 108, 0.06);
+  border-color: rgba(225, 48, 108, 0.25);
+  color: var(--ig);
+}
+.matrix-cell.yt.active {
+  background: rgba(255, 0, 0, 0.05);
+  border-color: rgba(255, 0, 0, 0.2);
+  color: var(--yt);
+}
+.matrix-cell.li.active {
+  background: rgba(0, 119, 181, 0.06);
+  border-color: rgba(0, 119, 181, 0.25);
+  color: var(--li);
+}
+.matrix-cell.tw.active {
+  background: rgba(29, 161, 242, 0.06);
+  border-color: rgba(29, 161, 242, 0.25);
+  color: var(--tw);
+}
+
+/* Clean Professional Zero States Muting */
+.matrix-cell.muted {
+  background: transparent;
+  border-color: var(--divider);
+  color: var(--text-dim);
+  opacity: 0.4;
 }

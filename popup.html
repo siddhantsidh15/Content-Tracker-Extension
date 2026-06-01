@@ -18,12 +18,19 @@
           <div class="logo-mark">▲</div>
           <div>
             <h1 class="app-title">Content Tracker</h1>
-            <p class="app-sub">IG · YT · LI upload log</p>
+            <p class="app-sub">IG · YT · LI · TW log</p>
           </div>
         </div>
         <div class="header-controls">
           <button class="icon-btn" id="historyToggle" title="View History">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
@@ -35,8 +42,17 @@
             <span id="themeIcon">☀</span>
           </button>
           <button id="open-tab-btn" class="icon-button" title="Open in new tab">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+              ></path>
               <polyline points="15 3 21 3 21 9"></polyline>
               <line x1="10" y1="14" x2="21" y2="3"></line>
             </svg>
@@ -50,6 +66,7 @@
           <span class="stat-pill ig"><span id="today-ig">0</span> IG</span>
           <span class="stat-pill yt"><span id="today-yt">0</span> YT</span>
           <span class="stat-pill li"><span id="today-li">0</span> LI</span>
+          <span class="stat-pill tw"><span id="today-tw">0</span> TW</span>
         </div>
       </div>
 
@@ -96,10 +113,31 @@
 
       <div class="history-container" id="historyContainer">
         <div class="history-header">
-          <h2>Upload History</h2>
+          <h2>Archive</h2>
         </div>
-        <div class="history-list" id="historyList">
+
+        <div class="history-controls">
+          <div class="history-tabs">
+            <button class="hist-tab active" id="tabStats">Stats</button>
+            <button class="hist-tab" id="tabList">Captions</button>
           </div>
+          <div class="history-search-wrapper">
+            <input
+              type="text"
+              id="historySearch"
+              class="history-search"
+              placeholder="Search archives..."
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div class="history-list" id="historyList"></div>
+        <div class="history-pagination" id="historyPagination">
+          <button class="page-btn" id="histPrevBtn" disabled>‹ Prev</button>
+          <span class="history-page-info" id="histPageInfo">Page 1 / 1</span>
+          <button class="page-btn" id="histNextBtn">Next ›</button>
+        </div>
       </div>
     </div>
 

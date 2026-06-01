@@ -1,10 +1,14 @@
 // ─── STATE ───────────────────────────────────────────────────────────────────
 const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_HIST_PAGE = 10; // History limit
 
 let state = {
-  entries: [], // Active items
-  archived: [], // Completed items saved for history
+  entries: [],
+  archived: [],
   currentPage: 1,
+  historyPage: 1,
+  historyViewMode: "stats", // "list" or "stats"
+  historySearchQuery: "",
   theme: "dark",
   viewMode: "split",
   isHistoryOpen: false,
@@ -27,8 +31,13 @@ function loadState(cb) {
       chrome.storage.local.get("trackerState", (res) => {
         if (res.trackerState) {
           Object.assign(state, res.trackerState);
-          // Ensure archived array exists for older installs
           if (!state.archived) state.archived = [];
+          if (!state.historyPage) state.historyPage = 1;
+
+          // FORCE RESETS ON LOAD (Ignores saved memory)
+          state.historyViewMode = "stats"; // Force Stats tab on load
+          state.historySearchQuery = ""; // Reset search on load
+          state.isHistoryOpen = false; // Force main view on load
         }
         cb();
       });
@@ -37,6 +46,12 @@ function loadState(cb) {
       if (saved) {
         Object.assign(state, JSON.parse(saved));
         if (!state.archived) state.archived = [];
+        if (!state.historyPage) state.historyPage = 1;
+
+        // FORCE RESETS ON LOAD (Ignores saved memory)
+        state.historyViewMode = "stats"; // Force Stats tab on load
+        state.historySearchQuery = ""; // Reset search on load
+        state.isHistoryOpen = false; // Force main view on load
       }
       cb();
     }
@@ -44,7 +59,6 @@ function loadState(cb) {
     cb();
   }
 }
-
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -72,30 +86,20 @@ function getFormattedDate() {
 
 function getJustDate(dateString) {
   if (!dateString) return null;
-  return dateString.split(",")[0].trim(); // Converts "29 May, 6pm" to "29 May"
+  return dateString.split(",")[0].trim();
 }
 
-// Calculate stats for all uploads
-function calculateStats() {
-  const allItems = [...state.entries, ...state.archived];
+// Calculate stats for a given array of items
+function calculateStatsFor(items) {
   const stats = {};
-
-  allItems.forEach((item) => {
-    if (item.ig && item.igDate) {
-      const d = getJustDate(item.igDate);
-      if (!stats[d]) stats[d] = { ig: 0, yt: 0, li: 0 };
-      stats[d].ig++;
-    }
-    if (item.yt && item.ytDate) {
-      const d = getJustDate(item.ytDate);
-      if (!stats[d]) stats[d] = { ig: 0, yt: 0, li: 0 };
-      stats[d].yt++;
-    }
-    if (item.li && item.liDate) {
-      const d = getJustDate(item.liDate);
-      if (!stats[d]) stats[d] = { ig: 0, yt: 0, li: 0 };
-      stats[d].li++;
-    }
+  items.forEach((item) => {
+    ["ig", "yt", "li", "tw"].forEach((platform) => {
+      if (item[platform] && item[`${platform}Date`]) {
+        const d = getJustDate(item[`${platform}Date`]);
+        if (!stats[d]) stats[d] = { ig: 0, yt: 0, li: 0, tw: 0 };
+        stats[d][platform]++;
+      }
+    });
   });
   return stats;
 }
@@ -131,60 +135,134 @@ function applyViewMode() {
 }
 
 function renderStats() {
-  // Update Main Stats
   const total = state.entries.length;
-  const done = state.entries.filter((e) => e.ig && e.yt && e.li).length;
+  const done = state.entries.filter((e) => e.ig && e.yt && e.li && e.tw).length;
   document.getElementById("totalCount").textContent = total;
   document.getElementById("doneCount").textContent = done;
   document.getElementById("currentPage").textContent = state.currentPage;
   document.getElementById("totalPages").textContent = totalPages();
 
-  // Update Daily Stats Bar
-  const stats = calculateStats();
+  const stats = calculateStatsFor([...state.entries, ...state.archived]);
   const todayString = getJustDate(getFormattedDate());
-  const todayStats = stats[todayString] || { ig: 0, yt: 0, li: 0 };
+  const todayStats = stats[todayString] || { ig: 0, yt: 0, li: 0, tw: 0 };
 
   document.getElementById("today-ig").textContent = todayStats.ig;
   document.getElementById("today-yt").textContent = todayStats.yt;
   document.getElementById("today-li").textContent = todayStats.li;
+  document.getElementById("today-tw").textContent = todayStats.tw;
 
-  // Render History UI
-  renderHistoryView(stats);
+  renderHistoryView();
 }
 
-function renderHistoryView(stats) {
+function renderHistoryView() {
   const historyList = document.getElementById("historyList");
-  historyList.innerHTML = "";
+  const paginationUI = document.getElementById("historyPagination");
 
-  // Sort dates newest to oldest (Basic string map for current year)
-  const sortedDates = Object.keys(stats).sort(
-    (a, b) => new Date(`${b} 2026`) - new Date(`${a} 2026`)
+  // Update Tabs Active State
+  document
+    .getElementById("tabList")
+    .classList.toggle("active", state.historyViewMode === "list");
+  document
+    .getElementById("tabStats")
+    .classList.toggle("active", state.historyViewMode === "stats");
+
+  // Filter archived items by Search Query
+  const query = state.historySearchQuery.toLowerCase();
+  const filteredArchive = state.archived.filter((e) =>
+    e.text.toLowerCase().includes(query)
   );
 
-  if (sortedDates.length === 0) {
-    historyList.innerHTML = `<div class="empty-state show"><p>No uploads recorded yet.</p></div>`;
+  historyList.innerHTML = "";
+
+  if (filteredArchive.length === 0) {
+    historyList.innerHTML = `<div class="empty-state show"><p>No items found.</p></div>`;
+    paginationUI.style.display = "none";
     return;
   }
 
-  // Mini SVGs for the History Cards
-  const igIcon = `<svg width="14" height="14" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/></svg>`;
-  const ytIcon = `<svg width="14" height="14" viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" fill="currentColor"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="var(--bg-card)"/></svg>`;
-  const liIcon = `<svg width="14" height="14" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="currentColor"/><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" fill="var(--bg-card)"/><rect x="2" y="9" width="4" height="12" fill="var(--bg-card)"/><circle cx="4" cy="4" r="2" fill="var(--bg-card)"/></svg>`;
+  // ==== STATS VIEW ====
+  // ==== STATS VIEW ====
+  if (state.historyViewMode === "stats") {
+    paginationUI.style.display = "none";
 
-  sortedDates.forEach((date) => {
-    const s = stats[date];
-    const card = document.createElement("div");
-    card.className = "history-card";
-    card.innerHTML = `
-      <div class="history-date">${date}</div>
-      <div class="history-stats">
-        <span class="stat-pill ig">${s.ig} ${igIcon}</span>
-        <span class="stat-pill yt">${s.yt} ${ytIcon}</span>
-        <span class="stat-pill li">${s.li} ${liIcon}</span>
-      </div>
-    `;
-    historyList.appendChild(card);
-  });
+    const stats = calculateStatsFor(filteredArchive);
+    const sortedDates = Object.keys(stats).sort(
+      (a, b) => new Date(`${b} 2026`) - new Date(`${a} 2026`)
+    );
+
+    const igIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/></svg>`;
+    const ytIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"></path><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="currentColor"></polygon></svg>`;
+    const liIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="4"></rect><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"/></svg>`;
+    const twIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>`;
+
+    sortedDates.forEach((date) => {
+      const s = stats[date];
+      const row = document.createElement("div");
+      row.className = "stats-dashboard-row";
+
+      row.innerHTML = `
+        <div class="stats-timeline-meta">
+          <span class="stats-marker-dot"></span>
+          <span class="stats-display-date">${date}</span>
+        </div>
+        <div class="stats-matrix-grid">
+          <div class="matrix-cell ig ${s.ig > 0 ? "active" : "muted"}">
+            <span class="matrix-icon">${igIcon}</span>
+            <span class="matrix-count">${s.ig}</span>
+          </div>
+          <div class="matrix-cell yt ${s.yt > 0 ? "active" : "muted"}">
+            <span class="matrix-icon">${ytIcon}</span>
+            <span class="matrix-count">${s.yt}</span>
+          </div>
+          <div class="matrix-cell li ${s.li > 0 ? "active" : "muted"}">
+            <span class="matrix-icon">${liIcon}</span>
+            <span class="matrix-count">${s.li}</span>
+          </div>
+          <div class="matrix-cell tw ${s.tw > 0 ? "active" : "muted"}">
+            <span class="matrix-icon">${twIcon}</span>
+            <span class="matrix-count">${s.tw}</span>
+          </div>
+        </div>
+      `;
+      historyList.appendChild(row);
+    });
+  }
+  // ==== LIST VIEW ====
+  else {
+    const reversedArchive = [...filteredArchive].reverse();
+    const totalHistPages = Math.ceil(
+      reversedArchive.length / ITEMS_PER_HIST_PAGE
+    );
+
+    if (state.historyPage > totalHistPages) state.historyPage = totalHistPages;
+    if (state.historyPage < 1) state.historyPage = 1;
+
+    const start = (state.historyPage - 1) * ITEMS_PER_HIST_PAGE;
+    const pageItems = reversedArchive.slice(start, start + ITEMS_PER_HIST_PAGE);
+
+    pageItems.forEach((entry) => {
+      const card = document.createElement("div");
+      card.className = "history-card flex-col";
+
+      card.innerHTML = `
+        <div class="entry-text" style="width: 100%; font-size: 13px;">${escapeHtml(entry.text)}</div>
+        <div class="platforms" style="flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+          <span class="platform-pill" style="color: var(--ig); border-color: var(--ig); background: rgba(225,48,108,0.05)">IG: ${entry.igDate || "N/A"}</span>
+          <span class="platform-pill" style="color: var(--yt); border-color: var(--yt); background: rgba(255,0,0,0.05)">YT: ${entry.ytDate || "N/A"}</span>
+          <span class="platform-pill" style="color: var(--li); border-color: var(--li); background: rgba(0,119,181,0.05)">LI: ${entry.liDate || "N/A"}</span>
+          <span class="platform-pill" style="color: var(--tw); border-color: var(--tw); background: rgba(29,161,242,0.05)">TW: ${entry.twDate || "N/A"}</span>
+        </div>
+      `;
+      historyList.appendChild(card);
+    });
+
+    paginationUI.style.display = totalHistPages > 1 ? "flex" : "none";
+    document.getElementById("histPageInfo").textContent =
+      `Page ${state.historyPage} / ${totalHistPages}`;
+    document.getElementById("histPrevBtn").disabled = state.historyPage === 1;
+    document.getElementById("histNextBtn").disabled =
+      state.historyPage === totalHistPages;
+  }
 }
 
 function renderEntries() {
@@ -194,7 +272,6 @@ function renderEntries() {
   const container = document.getElementById("entriesContainer");
 
   const entries = pageEntries();
-
   colLeft.innerHTML = "";
   colRight.innerHTML = "";
 
@@ -226,7 +303,12 @@ function renderEntries() {
 }
 
 function buildCard(entry, index) {
-  const isDone = entry.ig && entry.yt && entry.li;
+  const igState = entry.ig || false;
+  const ytState = entry.yt || false;
+  const liState = entry.li || false;
+  const twState = entry.tw || false;
+  const isDone = igState && ytState && liState && twState;
+
   const card = document.createElement("div");
   card.className = "entry-card" + (isDone ? " done" : "");
   card.dataset.id = entry.id;
@@ -239,7 +321,7 @@ function buildCard(entry, index) {
     </div>
     <div class="platforms">
       <label class="platform-check ig">
-        <input type="checkbox" ${entry.ig ? "checked" : ""} data-platform="ig" />
+        <input type="checkbox" ${igState ? "checked" : ""} data-platform="ig" />
         <span class="platform-pill">
           <span class="dot"></span>
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><defs><radialGradient id="ig-grad" cx="30%" cy="107%" r="150%"><stop offset="0%" stop-color="#fdf497"/><stop offset="10%" stop-color="#fdf497"/><stop offset="30%" stop-color="#fd5949"/><stop offset="60%" stop-color="#d6249f"/><stop offset="90%" stop-color="#285AEB"/></radialGradient></defs><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="url(#ig-grad)"/><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="url(#ig-grad)" stroke-width="0"/><circle cx="12" cy="12" r="4" fill="none" stroke="white" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1" fill="white"/></svg>
@@ -249,7 +331,7 @@ function buildCard(entry, index) {
       </label>
 
       <label class="platform-check yt">
-        <input type="checkbox" ${entry.yt ? "checked" : ""} data-platform="yt" />
+        <input type="checkbox" ${ytState ? "checked" : ""} data-platform="yt" />
         <span class="platform-pill">
           <span class="dot"></span>
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" fill="#FF0000"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white"/></svg>
@@ -259,12 +341,22 @@ function buildCard(entry, index) {
       </label>
 
       <label class="platform-check li">
-        <input type="checkbox" ${entry.li ? "checked" : ""} data-platform="li" />
+        <input type="checkbox" ${liState ? "checked" : ""} data-platform="li" />
         <span class="platform-pill">
           <span class="dot"></span>
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#0A66C2"/><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" fill="white"/><rect x="2" y="9" width="4" height="12" fill="white"/><circle cx="4" cy="4" r="2" fill="white"/></svg>
           LI
           <span class="date-stamp">${entry.liDate || ""}</span>
+        </span>
+      </label>
+      
+      <label class="platform-check tw">
+        <input type="checkbox" ${twState ? "checked" : ""} data-platform="tw" />
+        <span class="platform-pill">
+          <span class="dot"></span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="#1DA1F2" d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+          TW
+          <span class="date-stamp">${entry.twDate || ""}</span>
         </span>
       </label>
 
@@ -290,16 +382,11 @@ function buildCard(entry, index) {
   const copyBtn = card.querySelector(".copy-btn");
   copyBtn.addEventListener("click", () => {
     navigator.clipboard.writeText(entry.text).then(() => {
-      // Save original icon
       const originalIcon = copyBtn.innerHTML;
-
-      // Swap to a green checkmark
       copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
       copyBtn.style.color = "#10b981";
       copyBtn.style.borderColor = "rgba(16, 185, 129, 0.3)";
       copyBtn.style.background = "rgba(16, 185, 129, 0.1)";
-
-      // Reset back to original copy icon after 1.5 seconds
       setTimeout(() => {
         copyBtn.innerHTML = originalIcon;
         copyBtn.style.color = "";
@@ -324,14 +411,13 @@ function handleCheckboxChange(id, platform, checked, cardEl) {
   );
   if (dateSpan) dateSpan.textContent = entry[`${platform}Date`] || "";
 
-  const allDone = entry.ig && entry.yt && entry.li;
+  const allDone = entry.ig && entry.yt && entry.li && entry.tw;
 
   if (allDone) {
     cardEl.classList.add("done");
     setTimeout(() => {
       cardEl.classList.add("removing");
       setTimeout(() => {
-        // MOVE TO ARCHIVE INSTEAD OF DELETING
         state.entries = state.entries.filter((e) => e.id !== id);
         state.archived.push(entry);
 
@@ -342,9 +428,10 @@ function handleCheckboxChange(id, platform, checked, cardEl) {
       }, 260);
     }, 600);
   } else {
-    if (entry.ig || entry.yt || entry.li) cardEl.classList.remove("done");
+    if (entry.ig || entry.yt || entry.li || entry.tw)
+      cardEl.classList.remove("done");
     saveState();
-    renderStats(); // Update UI counters dynamically
+    renderStats();
   }
 }
 
@@ -392,9 +479,11 @@ function addEntry(text) {
     ig: false,
     yt: false,
     li: false,
+    tw: false,
     igDate: null,
     ytDate: null,
     liDate: null,
+    twDate: null,
     createdAt: Date.now(),
   };
 
@@ -476,6 +565,51 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     state.currentPage++;
     render();
   }
+});
+
+// History Pagination controls
+document.getElementById("histPrevBtn").addEventListener("click", () => {
+  if (state.historyPage > 1) {
+    state.historyPage--;
+    renderHistoryView();
+    saveState();
+  }
+});
+
+document.getElementById("histNextBtn").addEventListener("click", () => {
+  // Use dynamically calculated pages for search filtering
+  const query = state.historySearchQuery.toLowerCase();
+  const filteredArchive = state.archived.filter((e) =>
+    e.text.toLowerCase().includes(query)
+  );
+  const max = Math.ceil(filteredArchive.length / ITEMS_PER_HIST_PAGE);
+
+  if (state.historyPage < max) {
+    state.historyPage++;
+    renderHistoryView();
+    saveState();
+  }
+});
+
+// History Tabs
+document.getElementById("tabList").addEventListener("click", () => {
+  state.historyViewMode = "list";
+  state.historyPage = 1;
+  saveState();
+  renderHistoryView();
+});
+document.getElementById("tabStats").addEventListener("click", () => {
+  state.historyViewMode = "stats";
+  state.historyPage = 1;
+  saveState();
+  renderHistoryView();
+});
+
+// History Search
+document.getElementById("historySearch").addEventListener("input", (e) => {
+  state.historySearchQuery = e.target.value;
+  state.historyPage = 1;
+  renderHistoryView();
 });
 
 document.getElementById("open-tab-btn").addEventListener("click", () => {
