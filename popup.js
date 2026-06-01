@@ -242,17 +242,44 @@ function renderHistoryView() {
 
     pageItems.forEach((entry) => {
       const card = document.createElement("div");
-      card.className = "history-card flex-col";
+      card.className = "history-card flex-col archive-caption-card";
 
       card.innerHTML = `
-        <div class="entry-text" style="width: 100%; font-size: 13px;">${escapeHtml(entry.text)}</div>
-        <div class="platforms" style="flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+        <div class="history-card-header" style="display: flex; align-items: flex-start; justify-content: space-between; width: 100%; gap: 12px;">
+          <div class="entry-text" style="flex: 1; font-size: 13px; line-height: 1.4;">${escapeHtml(entry.text)}</div>
+          <button class="copy-btn archive-copy-btn" title="Copy content text">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="platforms" style="flex-wrap: wrap; gap: 8px; margin-top: 4px; width: 100%;">
           <span class="platform-pill" style="color: var(--ig); border-color: var(--ig); background: rgba(225,48,108,0.05)">IG: ${entry.igDate || "N/A"}</span>
           <span class="platform-pill" style="color: var(--yt); border-color: var(--yt); background: rgba(255,0,0,0.05)">YT: ${entry.ytDate || "N/A"}</span>
           <span class="platform-pill" style="color: var(--li); border-color: var(--li); background: rgba(0,119,181,0.05)">LI: ${entry.liDate || "N/A"}</span>
           <span class="platform-pill" style="color: var(--tw); border-color: var(--tw); background: rgba(29,161,242,0.05)">TW: ${entry.twDate || "N/A"}</span>
         </div>
       `;
+
+      // Copy Button Event Listener Configuration
+      const copyBtn = card.querySelector(".archive-copy-btn");
+      copyBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText(entry.text).then(() => {
+          const originalIcon = copyBtn.innerHTML;
+          copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+          copyBtn.style.color = "#10b981";
+          copyBtn.style.borderColor = "rgba(16, 185, 129, 0.3)";
+          copyBtn.style.background = "rgba(16, 185, 129, 0.1)";
+          setTimeout(() => {
+            copyBtn.innerHTML = originalIcon;
+            copyBtn.style.color = "";
+            copyBtn.style.borderColor = "";
+            copyBtn.style.background = "";
+          }, 1500);
+        });
+      });
+
       historyList.appendChild(card);
     });
 

@@ -954,3 +954,32 @@ body.viewing-history .history-list::before {
   color: var(--text-dim);
   opacity: 0.4;
 }
+
+/* Reveal copy action button on historical archive card container hover states */
+.archive-caption-card:hover .archive-copy-btn {
+  opacity: 1;
+  visibility: visible;
+}
+
+.archive-copy-btn {
+  /* Aligns visual behavior with standard card action buttons */
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition);
+}
+
+.archive-copy-btn:hover {
+  background: var(--btn-hover);
+  color: var(--text);
+  border-color: var(--border);
+}
