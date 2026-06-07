@@ -93,10 +93,10 @@ function getJustDate(dateString) {
 function calculateStatsFor(items) {
   const stats = {};
   items.forEach((item) => {
-    ["ig", "yt", "li", "tw"].forEach((platform) => {
+    ["ig", "yt", "li"].forEach((platform) => {
       if (item[platform] && item[`${platform}Date`]) {
         const d = getJustDate(item[`${platform}Date`]);
-        if (!stats[d]) stats[d] = { ig: 0, yt: 0, li: 0, tw: 0 };
+        if (!stats[d]) stats[d] = { ig: 0, yt: 0, li: 0 };
         stats[d][platform]++;
       }
     });
@@ -136,7 +136,7 @@ function applyViewMode() {
 
 function renderStats() {
   const total = state.entries.length;
-  const done = state.entries.filter((e) => e.ig && e.yt && e.li && e.tw).length;
+  const done = state.entries.filter((e) => e.ig && e.yt && e.li).length;
   document.getElementById("totalCount").textContent = total;
   document.getElementById("doneCount").textContent = done;
   document.getElementById("currentPage").textContent = state.currentPage;
@@ -144,12 +144,11 @@ function renderStats() {
 
   const stats = calculateStatsFor([...state.entries, ...state.archived]);
   const todayString = getJustDate(getFormattedDate());
-  const todayStats = stats[todayString] || { ig: 0, yt: 0, li: 0, tw: 0 };
+  const todayStats = stats[todayString] || { ig: 0, yt: 0, li: 0 };
 
   document.getElementById("today-ig").textContent = todayStats.ig;
   document.getElementById("today-yt").textContent = todayStats.yt;
   document.getElementById("today-li").textContent = todayStats.li;
-  document.getElementById("today-tw").textContent = todayStats.tw;
 
   renderHistoryView();
 }
@@ -181,7 +180,6 @@ function renderHistoryView() {
   }
 
   // ==== STATS VIEW ====
-  // ==== STATS VIEW ====
   if (state.historyViewMode === "stats") {
     paginationUI.style.display = "none";
 
@@ -193,7 +191,6 @@ function renderHistoryView() {
     const igIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/></svg>`;
     const ytIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"></path><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="currentColor"></polygon></svg>`;
     const liIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="4"></rect><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"/></svg>`;
-    const twIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>`;
 
     sortedDates.forEach((date) => {
       const s = stats[date];
@@ -217,10 +214,6 @@ function renderHistoryView() {
           <div class="matrix-cell li ${s.li > 0 ? "active" : "muted"}">
             <span class="matrix-icon">${liIcon}</span>
             <span class="matrix-count">${s.li}</span>
-          </div>
-          <div class="matrix-cell tw ${s.tw > 0 ? "active" : "muted"}">
-            <span class="matrix-icon">${twIcon}</span>
-            <span class="matrix-count">${s.tw}</span>
           </div>
         </div>
       `;
@@ -258,7 +251,6 @@ function renderHistoryView() {
           <span class="platform-pill" style="color: var(--ig); border-color: var(--ig); background: rgba(225,48,108,0.05)">IG: ${entry.igDate || "N/A"}</span>
           <span class="platform-pill" style="color: var(--yt); border-color: var(--yt); background: rgba(255,0,0,0.05)">YT: ${entry.ytDate || "N/A"}</span>
           <span class="platform-pill" style="color: var(--li); border-color: var(--li); background: rgba(0,119,181,0.05)">LI: ${entry.liDate || "N/A"}</span>
-          <span class="platform-pill" style="color: var(--tw); border-color: var(--tw); background: rgba(29,161,242,0.05)">TW: ${entry.twDate || "N/A"}</span>
         </div>
       `;
 
@@ -333,8 +325,7 @@ function buildCard(entry, index) {
   const igState = entry.ig || false;
   const ytState = entry.yt || false;
   const liState = entry.li || false;
-  const twState = entry.tw || false;
-  const isDone = igState && ytState && liState && twState;
+  const isDone = igState && ytState && liState;
 
   const card = document.createElement("div");
   card.className = "entry-card" + (isDone ? " done" : "");
@@ -374,16 +365,6 @@ function buildCard(entry, index) {
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#0A66C2"/><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" fill="white"/><rect x="2" y="9" width="4" height="12" fill="white"/><circle cx="4" cy="4" r="2" fill="white"/></svg>
           LI
           <span class="date-stamp">${entry.liDate || ""}</span>
-        </span>
-      </label>
-      
-      <label class="platform-check tw">
-        <input type="checkbox" ${twState ? "checked" : ""} data-platform="tw" />
-        <span class="platform-pill">
-          <span class="dot"></span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="#1DA1F2" d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
-          TW
-          <span class="date-stamp">${entry.twDate || ""}</span>
         </span>
       </label>
 
@@ -438,7 +419,7 @@ function handleCheckboxChange(id, platform, checked, cardEl) {
   );
   if (dateSpan) dateSpan.textContent = entry[`${platform}Date`] || "";
 
-  const allDone = entry.ig && entry.yt && entry.li && entry.tw;
+  const allDone = entry.ig && entry.yt && entry.li;
 
   if (allDone) {
     cardEl.classList.add("done");
@@ -455,8 +436,7 @@ function handleCheckboxChange(id, platform, checked, cardEl) {
       }, 260);
     }, 600);
   } else {
-    if (entry.ig || entry.yt || entry.li || entry.tw)
-      cardEl.classList.remove("done");
+    if (entry.ig || entry.yt || entry.li) cardEl.classList.remove("done");
     saveState();
     renderStats();
   }
@@ -506,11 +486,9 @@ function addEntry(text) {
     ig: false,
     yt: false,
     li: false,
-    tw: false,
     igDate: null,
     ytDate: null,
     liDate: null,
-    twDate: null,
     createdAt: Date.now(),
   };
 
@@ -657,3 +635,25 @@ loadState(() => {
   render();
   document.getElementById("contentInput").focus();
 });
+
+// Listen for external storage changes (like context menu entries)
+if (typeof chrome !== "undefined" && chrome.storage) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === "local" && changes.trackerState) {
+      const newState = changes.trackerState.newValue;
+      if (newState) {
+        // Synchronize active arrays seamlessly
+        state.entries = newState.entries || [];
+        state.archived = newState.archived || [];
+
+        // Prevent jarring layout shifts if you are browsing history
+        if (!state.isHistoryOpen) {
+          state.currentPage = newState.currentPage || 1;
+        }
+
+        // Repaint the active interface layers instantly
+        render();
+      }
+    }
+  });
+}
